@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GRE 333 Master Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="vocabulary.js"></script>
+    <style>
+        /* Smooth transition without flashing */
+        .cluster-card { 
+            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            height: auto;
+            display: flex;
+            flex-direction: column;
+            break-inside: avoid;
+            page-break-inside: avoid;
+            backdrop-filter: blur(8px);
+        }
+        .cluster-card:hover { 
+            transform: translateY(-2px);
+        }
+        
+        /* Balanced Masonry layout */
+        .cluster-grid {
+            column-count: 2;
+            column-gap: 2rem;
+        }
+        
+        @media (max-width: 1024px) {
+            .cluster-grid {
+                column-count: 1;
+                column-gap: 1.5rem;
+            }
+        }
+        
+        .pagination-btn {
+            transition: all 0.2s ease;
+        }
+        
+        /* Matte Dark-Mode Base to protect eyes during long study sessions */
+        body {
+            background-color: #0f172a; /* Slate 900 */
+            position: relative;
+        }
+        
+        /* Subtle texture for visual depth without distraction */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.02'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        header, main {
+            position: relative;
+            z-index: 2;
+        }
+        
+        header {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        
+        /* Muted, low-fatigue dark cluster card profiles */
+        .bg-card-dark { 
+            background: rgba(30, 41, 59, 0.7); /* Slate 800 with transparency */
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+        }
+        
+        /* Elegant, highly controlled side borders for cluster categorization */
+        .border-accent-0 { border-left: 4px solid #6366f1; }
+        .border-accent-1 { border-left: 4px solid #3b82f6; }
+        .border-accent-2 { border-left: 4px solid #10b981; }
+        .border-accent-3 { border-left: 4px solid #f59e0b; }
+        .border-accent-4 { border-left: 4px solid #ec4899; }
+        .border-accent-5 { border-left: 4px solid #8b5cf6; }
+        .border-accent-6 { border-left: 4px solid #06b6d4; }
+        
+        .badge-clickable {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .badge-clickable:hover {
+            transform: translateY(-1px);
+            filter: brightness(1.1);
+        }
+    </style>
+</head>
+<body class="text-slate-200 font-sans min-h-screen pb-12 antialiased">
+
+    <header class="sticky top-0延 z-50 shadow-md">
+        <div class="max-w-7xl mx-auto px-4 py-3.5 sm:px-6 lg:px-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+                <h1 class="text-xl font-bold text-slate-100 tracking-tight flex items-center gap-2">
+                    <span>📚</span> GRE 333 Master Dashboard
+                </h1>
+                <p class="text-[11px] text-slate-400 mt-0.5">Unified Focus Environment • Minimalist Interface</p>
+            </div>
+            
+            <div class="flex gap-2.5 text-center text-xs">
+                <div class="bg-slate-950/60 px-3 py-1.5 rounded-lg border border-slate-800 shadow-inner">
+                    <span id="stat-total-clusters" class="font-bold text-indigo-400">0</span> <span class="text-slate-400 text-[10px]">Clusters</span>
+                </div>
+                <div class="bg-slate-950/60 px-3 py-1.5 rounded-lg border border-slate-800 shadow-inner">
+                    <span id="stat-total" class="font-bold text-slate-300">0</span> <span class="text-slate-400 text-[10px]">Words</span>
+                </div>
+                <div class="bg-amber-500/10 px-3 py-1.5 rounded-lg border border-amber-500/20 text-amber-300">
+                    <span id="stat-studying" class="font-bold">0</span> <span class="text-amber-400/70 text-[10px]">Studying</span>
+                </div>
+                <div class="bg-emerald-500/10 px-3 py-1.5 rounded-lg border border-emerald-500/20 text-emerald-300">
+                    <span id="stat-mastered" class="font-bold">0</span> <span class="text-emerald-400/70 text-[10px]">Mastered</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 relative z-10">
+        <div class="bg-slate-900/90 border border-slate-800 p-4 rounded-xl shadow-lg flex flex-col gap-3 mb-6">
+            <div class="w-full flex flex-col lg:flex-row gap-3 justify-between items-center">
+                <div class="w-full lg:w-auto flex flex-col sm:flex-row gap-2.5 flex-grow max-w-3xl items-center">
+                    <input type="text" id="search-bar" placeholder="🔍 Filter workspace entries..." 
+                           class="w-full sm:w-72 px-3.5 py-2 border border-slate-700 rounded-lg bg-slate-950 text-slate-200 placeholder:text-slate-500 text-xs focus:outline-none focus:border-indigo-500 transition-colors">
+                    
+                    <select id="status-filter" class="w-full sm:w-56 px-2.5 py-2 border border-slate-700 rounded-lg bg-slate-950 text-slate-300 text-xs focus:outline-none focus:border-indigo-500 transition-colors">
+                        <option value="all">All Words (Mixed Status)</option>
+                        <option value="learning">Clusters with Words Learning</option>
+                        <option value="mastered">Clusters with Words Mastered</option>
+                    </select>
+                </div>
+
+                <div class="flex gap-2.5 w-full lg:w-auto justify-end items-center flex-wrap">
+                    <button id="shuffle-btn" onclick="toggleShuffleMode()" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-semibold text-xs rounded-lg transition-colors flex items-center gap-1.5">
+                        🔀 Shuffle Order
+                    </button>
+
+                    <label class="text-xs text-slate-400 font-medium whitespace-nowrap">Per page:</label>
+                    <select id="per-page-select" class="px-2 py-2 border border-slate-700 rounded-lg bg-slate-950 text-slate-300 text-xs focus:outline-none focus:border-indigo-500">
+                        <option value="5">5</option>
+                        <option value="10" selected>10</option>
+                        <option value="15">15</option>
+                        <option value="all">All</option>
+                    </select>
+                    
+                    <button id="toggle-view-btn" class="px-3.5 py-2 bg-indigo-950/60 hover:bg-indigo-900/80 text-indigo-300 border border-indigo-800/60 font-medium text-xs rounded-lg transition-colors">
+                        🔒 Hide Meanings (Study Mode)
+                    </button>
+                </div>
+            </div>
+
+            <div id="filter-hub-panel" class="hidden border-t border-slate-800 pt-2.5 mt-0.5 flex flex-wrap items-center gap-3 text-[11px]">
+                <span class="font-bold text-slate-400 flex items-center gap-1">Active Filters:</span>
+                
+                <div class="flex flex-wrap gap-2">
+                    <div id="active-type-container" class="hidden flex items-center gap-2 bg-indigo-950/40 border border-indigo-900 px-2 py-0.5 rounded-md">
+                        <span class="text-slate-400">Type: <span id="active-type-label" class="font-bold uppercase text-indigo-300">NONE</span></span>
+                        <button onclick="clearTypeFilter()" class="text-slate-500 hover:text-slate-300 ml-1">✕</button>
+                    </div>
+
+                    <div id="active-use-case-container" class="hidden flex items-center gap-2 bg-emerald-950/40 border border-emerald-900 px-2 py-0.5 rounded-md">
+                        <span class="text-slate-400">Use Case: <span id="active-use-case-label" class="font-bold text-emerald-300">NONE</span></span>
+                        <button onclick="clearUseCaseFilter()" class="text-slate-500 hover:text-slate-300 ml-1">✕</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="pagination-top" class="flex justify-between items-center mb-4 pb-1">
+            <div id="page-info" class="text-xs text-slate-400 font-medium"></div>
+        </div>
+
+        <div id="cluster-grid" class="cluster-grid"></div>
+
+        <div id="pagination-bottom" class="flex justify-center items-center gap-1.5 mt-6 pt-4 border-t border-slate-800"></div>
+
+        <div id="empty-state" class="hidden text-center py-12">
+            <p class="text-slate-400 text-sm bg-slate-900 border border-slate-800 inline-block px-5 py-2.5 rounded-lg shadow-md">No matching clusters found. Check your custom workspace filters.</p>
+        </div>
+    </main>
+
+    <script>
+        let workingData = [];
+        let originalOrderData = []; 
+        let isShuffled = false;     
+        let activeTypeFilter = null; 
+        let activeUseCaseFilter = null; 
+
+        if (typeof vocabularyData !== 'undefined') {
+            workingData = vocabularyData;
+        } else if (typeof window.vocabularyData !== 'undefined') {
+            workingData = window.vocabularyData;
+        }
+        
+        if (workingData && workingData.length > 0) {
+            originalOrderData = [...workingData];
+        }
+        
+        let userProgress = JSON.parse(localStorage.getItem('gre333_progress')) || {};
+        let hideMeaningsMode = false;
+        let currentPage = 1;
+        let itemsPerPage = 10;
+        let currentFilteredClusters = [];
+
+        function getCardBorderClass(index) {
+            const classes = [
+                'border-accent-0', 'border-accent-1', 'border-accent-2', 
+                'border-accent-3', 'border-accent-4', 'border-accent-5', 'border-accent-6'
+            ];
+            return classes[index % classes.length];
+        }
+
+        function initApp() {
+            if (!workingData || workingData.length === 0) {
+                document.getElementById('cluster-grid').innerHTML = `
+                    <div class="text-center py-12">
+                        <p class="text-red-400 font-medium">Missing vocabularyData vault layout source file.</p>
+                    </div>`;
+                return;
+            }
+            applyFiltersAndRender();
+            
+            document.getElementById('search-bar').addEventListener('input', () => { currentPage = 1; applyFiltersAndRender(); });
+            document.getElementById('status-filter').addEventListener('change', () => { currentPage = 1; applyFiltersAndRender(); });
+            document.getElementById('per-page-select').addEventListener('change', (e) => {
+                itemsPerPage = e.target.value === 'all' ? Infinity : parseInt(e.target.value);
+                currentPage = 1;
+                applyFiltersAndRender();
+            });
+            document.getElementById('toggle-view-btn').addEventListener('click', toggleStudyMode);
+        }
+
+        function toggleShuffleMode() {
+            const btn = document.getElementById('shuffle-btn');
+            if (!isShuffled) {
+                for (let i = workingData.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [workingData[i], workingData[j]] = [workingData[j], workingData[i]];
+                }
+                isShuffled = true;
+                btn.textContent = "🔢 Default Serial Mode";
+            } else {
+                workingData = [...originalOrderData];
+                isShuffled = false;
+                btn.textContent = "🔀 Shuffle Order";
+            }
+            currentPage = 1;
+            applyFiltersAndRender();
+        }
+
+        function filterByType(typeString) {
+            activeTypeFilter = typeString.toLowerCase().trim();
+            document.getElementById('active-type-label').textContent = activeTypeFilter;
+            document.getElementById('active-type-container').classList.remove('hidden');
+            currentPage = 1;
+            applyFiltersAndRender();
+        }
+
+        function filterByUseCase(useCaseString) {
+            activeUseCaseFilter = useCaseString.trim();
+            document.getElementById('active-use-case-label').textContent = activeUseCaseFilter;
+            document.getElementById('active-use-case-container').classList.remove('hidden');
+            currentPage = 1;
+            applyFiltersAndRender();
+        }
+
+        function clearTypeFilter() {
+            activeTypeFilter = null;
+            document.getElementById('active-type-container').classList.add('hidden');
+            currentPage = 1;
+            applyFiltersAndRender();
+        }
+
+        function clearUseCaseFilter() {
+            activeUseCaseFilter = null;
+            document.getElementById('active-use-case-container').classList.add('hidden');
+            currentPage = 1;
+            applyFiltersAndRender();
+        }
+
+        function updateFilterHubVisibility() {
+            const hub = document.getElementById('filter-hub-panel');
+            if (activeTypeFilter || activeUseCaseFilter) {
+                hub.classList.remove('hidden');
+            } else {
+                hub.classList.add('hidden');
+            }
+        }
+
+        function applyFiltersAndRender() {
+            const searchVal = document.getElementById('search-bar').value.toLowerCase().trim();
+            const statusFilter = document.getElementById('status-filter').value;
+
+            updateFilterHubVisibility();
+
+            currentFilteredClusters = workingData.filter(cluster => {
+                if (!cluster.words) return false;
+                
+                let words = cluster.words;
+
+                if (activeTypeFilter) {
+                    const hasType = words.some(w => {
+                        if (Array.isArray(w.type)) {
+                            return w.type.map(t => t.toLowerCase()).includes(activeTypeFilter);
+                        } else if (typeof w.type === 'string') {
+                            return w.type.toLowerCase().includes(activeTypeFilter);
+                        }
+                        return false;
+                    });
+                    if (!hasType) return false;
+                }
+
+                if (activeUseCaseFilter) {
+                    const hasUseCase = words.some(w => {
+                        if (Array.isArray(w.primaryUseCases)) {
+                            return w.primaryUseCases.map(u => u.toLowerCase()).includes(activeUseCaseFilter.toLowerCase());
+                        }
+                        return false;
+                    });
+                    if (!hasUseCase) return false;
+                }
+
+                const hasMasteredWord = words.some(w => !!userProgress[w.word]);
+                const hasLearningWord = words.some(w => !userProgress[w.word]);
+
+                if (statusFilter === 'mastered' && !hasMasteredWord) return false;
+                if (statusFilter === 'learning' && !hasLearningWord) return false;
+
+                const wordsString = words.map(w => (w.word || '') + " " + (w.contextualNuance || '') + " " + (w.exampleSentence || '') + " " + (w.primaryUseCases || []).join(" ")).join(" ").toLowerCase();
+                
+                return (cluster.clusterName || '').toLowerCase().includes(searchVal) ||
+                       (cluster.coreMeaning || '').toLowerCase().includes(searchVal) ||
+                       (cluster.clusterStudyTips && cluster.clusterStudyTips.toLowerCase().includes(searchVal)) ||
+                       wordsString.includes(searchVal);
+            });
+            
+            renderClusterGrid();
+            updateStats();
+        }
+
+        function toggleMastered(word) {
+            userProgress[word] = !userProgress[word];
+            localStorage.setItem('gre333_progress', JSON.stringify(userProgress));
+            applyFiltersAndRender();
+        }
+
+        function toggleStudyMode() {
+            hideMeaningsMode = !hideMeaningsMode;
+            const btn = document.getElementById('toggle-view-btn');
+            btn.textContent = hideMeaningsMode ? "🔓 Show Meanings (Explore Mode)" : "🔒 Hide Meanings (Study Mode)";
+            renderClusterGrid();
+        }
+
+        function updateStats() {
+            let totalWords = 0;
+            let masteredWords = 0;
+            
+            originalOrderData.forEach(cluster => {
+                if (cluster.words) {
+                    cluster.words.forEach(w => {
+                        totalWords++;
+                        if (userProgress[w.word]) masteredWords++;
+                    });
+                }
+            });
+            document.getElementById('stat-total-clusters').textContent = originalOrderData.length;
+            document.getElementById('stat-total').textContent = totalWords;
+            document.getElementById('stat-mastered').textContent = masteredWords;
+            document.getElementById('stat-studying').textContent = totalWords - masteredWords;
+        }
+
+        function renderPagination() {
+            const totalPages = Math.ceil(currentFilteredClusters.length / itemsPerPage);
+            const startIdx = (currentPage - 1) * itemsPerPage;
+            const endIdx = Math.min(startIdx + itemsPerPage, currentFilteredClusters.length);
+            
+            const pageInfo = document.getElementById('page-info');
+            if (pageInfo) {
+                pageInfo.innerHTML = currentFilteredClusters.length === 0 ? `Showing 0 of 0 clusters` :
+                    `Showing ${startIdx + 1}-${endIdx} of ${currentFilteredClusters.length} clusters | Page ${currentPage} of ${totalPages || 1}`;
+            }
+            
+            const paginationContainer = document.getElementById('pagination-bottom');
+            if (!paginationContainer || (totalPages <= 1 || currentFilteredClusters.length === 0)) {
+                if (paginationContainer) paginationContainer.innerHTML = '';
+                return;
+            }
+            
+            let paginationHTML = `
+                <button class="pagination-btn px-3 py-1.5 border border-slate-700 rounded-lg text-xs font-semibold bg-slate-900 hover:bg-slate-800 text-slate-300" 
+                        onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>← Prev</button>
+            `;
+            
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+                    paginationHTML += `<button class="pagination-btn px-2.5 py-1.5 border rounded-lg text-xs font-semibold transition-all ${i === currentPage ? 'bg-indigo-600 border-indigo-600 text-white shadow-md' : 'bg-slate-900 border-slate-700 text-slate-400 hover:bg-slate-800'}" onclick="changePage(${i})">${i}</button>`;
+                } else if (i === 2 || i === totalPages - 1) {
+                    paginationHTML += `<span class="px-1 text-slate-600">...</span>`;
+                }
+            }
+            
+            paginationHTML += `
+                <button class="pagination-btn px-3 py-1.5 border border-slate-700 rounded-lg text-xs font-semibold bg-slate-900 hover:bg-slate-800 text-slate-300" 
+                        onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>Next →</button>
+            `;
+            paginationContainer.innerHTML = paginationHTML;
+        }
+
+        function changePage(page) {
+            currentPage = page;
+            renderClusterGrid();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function renderClusterGrid() {
+            const grid = document.getElementById('cluster-grid');
+            const emptyState = document.getElementById('empty-state');
+            
+            const totalPages = Math.ceil(currentFilteredClusters.length / itemsPerPage);
+            if (currentPage > totalPages && totalPages > 0) currentPage = totalPages;
+            
+            const startIdx = (currentPage - 1) * itemsPerPage;
+            const endIdx = Math.min(startIdx + itemsPerPage, currentFilteredClusters.length);
+            const pageClusters = currentFilteredClusters.slice(startIdx, endIdx);
+            
+            if (pageClusters.length === 0) {
+                grid.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                renderPagination();
+                return;
+            }
+            
+            emptyState.classList.add('hidden');
+            
+            const cardsHTML = pageClusters.map((cluster, clusterIndex) => {
+                const actualCardIndex = startIdx + clusterIndex;
+                if (!cluster.words) return '';
+                
+                const wordsHTML = cluster.words.map((item, wordIndex) => {
+                    const isMastered = !!userProgress[item.word];
+                    
+                    const useCasesHTML = (item.primaryUseCases || []).map(uc => `
+                        <span onclick="filterByUseCase('${uc}')" title="Filter by ${uc}" class="badge-clickable bg-slate-950/80 border border-slate-800 text-slate-400 text-[10px] font-semibold px-2 py-0.5 rounded transition-colors hover:bg-slate-900 hover:text-slate-200">
+                            ${uc}
+                        </span>
+                    `).join('');
+
+                    const borderTopClass = wordIndex > 0 ? 'border-t border-slate-800/60 pt-4 mt-4' : '';
+                    const dictionaryLinkHTML = item.dictionaryLink ? `
+                        <div class="mt-1.5">
+                            <a href="${item.dictionaryLink}" target="_blank" class="text-[11px] text-indigo-400 hover:text-indigo-300 underline inline-flex items-center gap-1 font-medium">
+                                📖 Dictionary Entry
+                            </a>
+                        </div>
+                    ` : '';
+
+                    let typesArray = [];
+                    if (Array.isArray(item.type)) {
+                        typesArray = item.type;
+                    } else if (typeof item.type === 'string') {
+                        typesArray = item.type.split(',').map(t => t.trim());
+                    }
+                    
+                    const typeBadgesHTML = typesArray.map(t => `
+                        <span onclick="filterByType('${t}')" title="Filter by all ${t}s" class="badge-clickable bg-indigo-950/80 text-indigo-300 border border-indigo-900/60 text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded">
+                            ${t}
+                        </span>
+                    `).join(' ');
+
+                    return `
+                        <div class="${borderTopClass}">
+                            <div class="flex justify-between items-baseline mb-1.5 flex-wrap gap-2">
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <h3 class="text-base font-extrabold text-slate-100 tracking-tight">${item.word}</h3>
+                                    <div class="flex gap-1 items-center">${typeBadgesHTML}</div>
+                                </div>
+                                <button onclick="toggleMastered('${item.word}')" class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded transition-all ${isMastered ? 'bg-emerald-950 border border-emerald-800 text-emerald-400' : 'bg-slate-950 border border-slate-800 text-slate-400 hover:text-slate-200'}">
+                                    ${isMastered ? '✓ Mastered' : 'Mark Learn'}
+                                </button>
+                            </div>
+                            <div class="space-y-2 transition-all ${hideMeaningsMode ? 'blur-md select-none opacity-5 hover:blur-none hover:opacity-100' : ''}">
+                                <div class="flex flex-wrap gap-1 mt-1">${useCasesHTML}</div>
+                                <div class="text-xs text-slate-300 bg-slate-950/40 border border-slate-800/80 p-2.5 rounded-lg">
+                                    <strong class="text-[9px] text-slate-500 block uppercase tracking-wide font-bold mb-0.5">Nuance & Context</strong>
+                                    ${item.contextualNuance || ''}
+                                </div>
+                                <p class="text-xs text-slate-400 pl-2 border-l border-slate-700 italic font-serif">
+                                    "${item.exampleSentence || ''}"
+                                </p>
+                                ${dictionaryLinkHTML}
+                                ${item.etymologyNote ? `
+                                <div class="mt-2 bg-amber-950/20 border border-amber-900/30 p-2 rounded-lg text-[11px] text-amber-300/90">
+                                    <span class="font-bold uppercase text-[9px] tracking-wide text-amber-500/80 block mb-0.5">Mnemonic Anchor</span>
+                                    ${item.etymologyNote}
+                                </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                const studyTipsHTML = cluster.clusterStudyTips ? `
+                    <div class="mt-4 bg-slate-950/80 border border-slate-800 p-2.5 rounded-lg text-[11px] text-slate-400">
+                        <strong class="font-bold text-indigo-400 uppercase text-[9px] tracking-wide block mb-0.5">🎯 Strategy & Traps:</strong>
+                        ${cluster.clusterStudyTips}
+                    </div>
+                ` : '';
+                
+                const borderAccentClass = getCardBorderClass(actualCardIndex);
+
+                return `
+                    <div class="cluster-card bg-card-dark ${borderAccentClass} p-5 rounded-xl" style="margin-bottom: 1.5rem;">
+                        <div>
+                            <div class="mb-4 pb-3 border-b border-slate-800">
+                                <span class="text-slate-500 text-[10px] font-mono tracking-widest block mb-0.5">
+                                    CLUSTER ID: ${cluster.clusterId || '???'}
+                                </span>
+                                <h2 class="text-base font-black text-slate-200 uppercase tracking-tight">${cluster.clusterName || ''}</h2>
+                                <p class="text-xs text-emerald-400/90 italic mt-1"><span class="font-bold text-slate-400 not-italic">💡 Core concept:</span> ${cluster.coreMeaning || ''}</p>
+                            </div>
+                            <div class="space-y-3">
+                                ${wordsHTML}
+                            </div>
+                        </div>
+                        <div>
+                            ${studyTipsHTML}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            grid.innerHTML = cardsHTML;
+            renderPagination();
+        }
+
+        window.onload = initApp;
+    </script>
+</body>
+</html>
